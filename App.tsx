@@ -1,21 +1,23 @@
-import React, { useState } from "react";
-import { NativeBaseProvider, View } from 'native-base';
-import AdicionarTarefa from "./src/components/AdicionarTarefa";
+// Importa o provedor de estado global
+import { ProvedorEstadoGlobal } from "./src/hooks/EstadoGlobal";
+// Importa o componente ListaTarefas
 import ListaTarefas from "./src/components/ListaTarefas";
+import { NativeBaseProvider, View } from "native-base";
+import AdicionarTarefa from "./src/components/AdicionarTarefa";
 
 export default function App() {
-  const [tarefas, setTarefas] = useState<string[]>([]);
-
-  const adicionarTarefa = (novaTarefa: string) => {
-    setTarefas([...tarefas, novaTarefa]);
-  };
-
+  // Retorna a estrutura da tela principal
   return (
+    // Envolve a aplicação no provedor de estado global
     <NativeBaseProvider>
-      <View style={{ flex: 1 }}>
-        <AdicionarTarefa onAdicionarTarefa={adicionarTarefa} />
-        <ListaTarefas tarefas={tarefas} />
-      </View>
+      <ProvedorEstadoGlobal>
+        <View style={{ flex: 1 }}>
+          {/* Componente para adicionar tarefas */}
+          <AdicionarTarefa />
+          {/* Componente que lista as tarefas */}
+          <ListaTarefas />
+        </View>
+      </ProvedorEstadoGlobal>
     </NativeBaseProvider>
   );
 }
