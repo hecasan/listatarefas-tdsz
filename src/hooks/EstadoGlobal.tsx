@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-community/async-storage';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Interface que define a estrutura de uma tarefa
 interface Tarefa {
@@ -10,17 +10,21 @@ interface Tarefa {
 // Interface que define o contexto global de estado
 interface ContextoEstadoGlobal {
   tarefas: Tarefa[];
+  carregarTarefas: () => void;
   adicionarTarefa: (titulo: string) => void;
   editarTarefa: (id: number, novoTitulo: string) => void;
   excluirTarefa: (id: number) => void;
+  carregando: boolean;
 }
 
 // Cria o contexto global de estado
 const ContextoEstadoGlobal = createContext<ContextoEstadoGlobal>({
   tarefas: [],
+  carregarTarefas: () => {},
   adicionarTarefa: () => {},
   editarTarefa: () => {},
   excluirTarefa: () => {},
+  carregando: false,
 });
 
 // Hook para acessar o contexto global de estado
@@ -28,56 +32,73 @@ export const useEstadoGlobal = () => useContext(ContextoEstadoGlobal);
 
 // Componente que fornece o contexto global de estado para seus filhos
 export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Define o estado inicial das tarefas
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const [carregando, setCarregando] = useState<boolean>(true);
 
-  // Flag para controlar a recarga da tela
-  const [isRecarregandoTela, setIsRecarregandoTela] = useState(true);
+  // Função para buscar tarefas do backend
+  const carregarTarefas = async () => {
+    setCarregando(true);
+    try {
+      const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
+      if (!token) throw new Error('Token não encontrado');
 
-  // Função para adicionar uma nova tarefa
+      const response = await fetch('http://localhost:3000/api/tarefas', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Insere o token JWT no cabeçalho
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar tarefas');
+      }
+
+      const dados = await response.json();
+      setTarefas(dados);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
   const adicionarTarefa = (titulo: string) => {
-    // Cria uma nova tarefa com um ID único
     const novaTarefa: Tarefa = {
       id: Date.now(),
       titulo,
     };
 
-    // Atualiza o estado das tarefas com a nova tarefa
     setTarefas([...tarefas, novaTarefa]);
-
-    // Salva as tarefas no AsyncStorage
-    salvarTarefas(tarefas);
+    salvarTarefas([...tarefas, novaTarefa]); // Atualizado para salvar a nova tarefa
   };
 
-  // Função para editar o título de uma tarefa
   const editarTarefa = (id: number, novoTitulo: string) => {
-    // Cria uma cópia das tarefas
     const novasTarefas = tarefas.map(tarefa =>
       tarefa.id === id ? { ...tarefa, titulo: novoTitulo } : tarefa
     );
 
-    // Atualiza o estado das tarefas com as novas tarefas
     setTarefas(novasTarefas);
-
-    // Salva as tarefas no AsyncStorage
     salvarTarefas(novasTarefas);
   };
 
-  // Função para excluir uma tarefa
   const excluirTarefa = (id: number) => {
-    // Cria uma cópia das tarefas
     const novasTarefas = tarefas.filter(tarefa => tarefa.id !== id);
-
-    // Atualiza o estado das tarefas com as novas tarefas
     setTarefas(novasTarefas);
-
-    // Salva as tarefas no AsyncStorage
     salvarTarefas(novasTarefas);
   };
 
-  // Carrega as tarefas do AsyncStorage na inicialização
+  const salvarTarefas = async (tarefas: Tarefa[]) => {
+    try {
+      await AsyncStorage.setItem('tarefas', JSON.stringify(tarefas));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Carrega as tarefas salvas no AsyncStorage
   useEffect(() => {
-    const carregarTarefas = async () => {
+    const carregarTarefasLocal = async () => {
       try {
         const tarefasArmazenadas = await AsyncStorage.getItem('tarefas');
         if (tarefasArmazenadas) {
@@ -85,32 +106,17 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
         }
       } catch (error) {
         console.error(error);
+      } finally {
+        setCarregando(false);
       }
-
-      setIsRecarregandoTela(false); // Define a tela como carregada
     };
-    carregarTarefas();
+    carregarTarefasLocal();
   }, []);
 
-  // Salva as tarefas no AsyncStorage antes da recarga da tela
-  useEffect(() => {
-    salvarTarefas(tarefas);
-  }, [tarefas]);
-
-  // Função para salvar as tarefas no AsyncStorage
-  const salvarTarefas = async (tarefas: Tarefa[]) => {
-    if (!isRecarregandoTela) {
-      try {
-        await AsyncStorage.setItem('tarefas', JSON.stringify(tarefas));
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  };
-
-  // Retorna o contexto global de estado com as funções para manipular as tarefas
   return (
-    <ContextoEstadoGlobal.Provider value={{ tarefas, adicionarTarefa, editarTarefa, excluirTarefa }}>
+    <ContextoEstadoGlobal.Provider
+      value={{ tarefas, carregarTarefas, adicionarTarefa, editarTarefa, excluirTarefa, carregando }}
+    >
       {children}
     </ContextoEstadoGlobal.Provider>
   );

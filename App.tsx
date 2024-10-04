@@ -1,22 +1,15 @@
-// Importa o provedor de estado global
+import React from "react";
 import { ProvedorEstadoGlobal } from "./src/hooks/EstadoGlobal";
-// Importa o componente ListaTarefas
-import ListaTarefas from "./src/components/ListaTarefas";
-import { NativeBaseProvider, View } from "native-base";
-import AdicionarTarefa from "./src/components/AdicionarTarefa";
+import { NativeBaseProvider } from "native-base";
+import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
-  // Retorna a estrutura da tela principal
+  
   return (
-    // Envolve a aplicação no provedor de estado global
+    
     <NativeBaseProvider>
       <ProvedorEstadoGlobal>
-        <View style={{ flex: 1 }}>
-          {/* Componente para adicionar tarefas */}
-          <AdicionarTarefa />
-          {/* Componente que lista as tarefas */}
-          <ListaTarefas />
-        </View>
+        <AppNavigator /> {/* Adicione o navegador aqui */}
       </ProvedorEstadoGlobal>
     </NativeBaseProvider>
   );
