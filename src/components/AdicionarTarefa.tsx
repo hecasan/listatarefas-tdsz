@@ -2,11 +2,8 @@ import React, { useState } from "react";
 import { View, Input, IconButton } from 'native-base';
 import { Ionicons } from '@expo/vector-icons';
 import { useEstadoGlobal } from "../hooks/EstadoGlobal";
-import AsyncStorage from '@react-native-community/async-storage'; // Para recuperar o token
-
-interface AdicionarTarefaProps {
-  onAdicionarTarefa: () => void; // Função de callback para atualizar a lista de tarefas
-}
+import { AdicionarTarefaProps } from "../interfaces/AdicionarTarefa.interface";
+import { adicionarTarefaApi } from "../services/TarefaService"; // Importando o serviço
 
 const AdicionarTarefa: React.FC<AdicionarTarefaProps> = ({ onAdicionarTarefa }) => {
   const [novaTarefa, setNovaTarefa] = useState("");
@@ -16,24 +13,7 @@ const AdicionarTarefa: React.FC<AdicionarTarefaProps> = ({ onAdicionarTarefa }) 
     if (novaTarefa.trim() === "") return;
 
     try {
-      const token = await AsyncStorage.getItem('token'); // Recuperar o token de autenticação
-      if (!token) {
-        console.error('Token não encontrado!');
-        return;
-      }
-
-      const response = await fetch('http://localhost:3000/api/tarefas', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Adiciona o token JWT ao cabeçalho
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ tarefa: novaTarefa }), // Envia a nova tarefa
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao adicionar tarefa');
-      }
+      await adicionarTarefaApi(novaTarefa); // Chamando a função do serviço para adicionar a tarefa
 
       // Se tudo deu certo, adicionar a tarefa no estado global
       adicionarTarefa(novaTarefa);
