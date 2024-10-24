@@ -1,22 +1,35 @@
-// src/navigation/AppNavigator.tsx
-
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import TarefasScreen from '../components/ListaTarefas';
-import { RootStackParamList } from './types';
+import ListaTarefas from '../components/ListaTarefas';
 import LoginScreen from '../screens/LoginScreen';
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator();
 
-const AppNavigator: React.FC = () => {
+const AppNavigator = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="LoginScreen">
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="TarefasScreen" component={TarefasScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator>
+      {/* Tela de Login */}
+      <Stack.Screen 
+        name="LoginScreen" 
+        component={LoginScreen} 
+        options={{ headerShown: false }} 
+      />
+      {/* Tela Principal com Formulário de Tarefas e Lista de Tarefas */}
+      <Stack.Screen 
+        name="TarefasScreen" // Aqui estamos registrando como "TarefasScreen"
+        component={MainScreen} 
+        options={{ title: 'Tarefas' }} 
+      />
+    </Stack.Navigator>
+  );
+};
+
+// Componente para a Tela Principal
+const MainScreen = () => {
+  return (
+    <>
+      <ListaTarefas />
+    </>
   );
 };
 

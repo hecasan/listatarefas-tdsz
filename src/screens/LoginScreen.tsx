@@ -1,16 +1,16 @@
 // src/components/LoginScreen.tsx
 
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text } from 'react-native';
+import { View, TextInput, Button, Text, ImageBackground, StyleSheet } from 'react-native';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../navigation/types'; // Importe o tipo
+import { RootStackParamList } from '../navigation/types';
 import AsyncStorage from '@react-native-community/async-storage';
 
 const LoginScreen: React.FC = () => {
-  const [username, setUsername] = useState(''); // Altera email para username
-  const [password, setPassword] = useState(''); // Altera senha para password
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>(); // Utilize o tipo
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const handleLogin = async () => {
     try {
@@ -20,9 +20,9 @@ const LoginScreen: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username, // Envie o username
-          password, // Envie a password
-          role: 'user' // Adicione role como user por padrão
+          username,
+          password,
+          role: 'user'
         }),
       });
 
@@ -31,33 +31,74 @@ const LoginScreen: React.FC = () => {
       }
 
       const { token } = await response.json();
-      await AsyncStorage.setItem('token', token); // Armazena o token no AsyncStorage
-      setError(null); // Limpa qualquer erro
-      navigation.navigate('TarefasScreen'); // Navega para a tela de tarefas
+      await AsyncStorage.setItem('token', token);
+      setError(null);
+      navigation.navigate('TarefasScreen');
     } catch (error) {
       setError('Erro de autenticação. Verifique suas credenciais.');
     }
   };
 
   return (
-    <View>
-      <TextInput
-        placeholder="Username" // Altere o placeholder para Username
-        value={username}
-        onChangeText={setUsername}
-        style={{ marginBottom: 10 }}
-      />
-      <TextInput
-        placeholder="Senha"
-        value={password} // Altere para password
-        onChangeText={setPassword} // Altere para setPassword
-        secureTextEntry
-        style={{ marginBottom: 10 }}
-      />
-      <Button title="Login" onPress={handleLogin} />
-      {error && <Text style={{ color: 'red' }}>{error}</Text>}
-    </View>
+    <ImageBackground
+      source={require('../../assets/bg-tela-login.jpg')}
+      style={styles.background}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Bem-vindo!</Text>
+        <TextInput
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+        />
+        <Button title="Login" onPress={handleLogin} />
+        {error && <Text style={styles.error}>{error}</Text>}
+      </View>
+    </ImageBackground>
   );
 };
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    resizeMode: 'cover', // Ajusta a imagem para cobrir a tela inteira
+    justifyContent: 'center',
+  },
+  container: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Fundo branco com transparência
+    padding: 20,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  input: {
+    width: '100%',
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  error: {
+    color: 'red',
+    marginTop: 10,
+  },
+});
 
 export default LoginScreen;

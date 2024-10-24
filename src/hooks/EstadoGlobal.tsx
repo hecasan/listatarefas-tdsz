@@ -11,7 +11,7 @@ interface Tarefa {
 interface ContextoEstadoGlobal {
   tarefas: Tarefa[];
   carregarTarefas: () => void;
-  adicionarTarefa: (titulo: string) => void;
+  adicionarTarefa: (titulo: string) => Promise<void>; // Modificado para ser async
   editarTarefa: (id: number, novoTitulo: string) => void;
   excluirTarefa: (id: number) => void;
   carregando: boolean;
@@ -21,7 +21,7 @@ interface ContextoEstadoGlobal {
 const ContextoEstadoGlobal = createContext<ContextoEstadoGlobal>({
   tarefas: [],
   carregarTarefas: () => {},
-  adicionarTarefa: () => {},
+  adicionarTarefa: async () => {},
   editarTarefa: () => {},
   excluirTarefa: () => {},
   carregando: false,
@@ -63,14 +63,33 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const adicionarTarefa = (titulo: string) => {
-    const novaTarefa: Tarefa = {
-      id: Date.now(),
-      titulo,
-    };
+  const adicionarTarefa = async (titulo: string) => { // Modificado para ser async
+    const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
+    if (!token) throw new Error('Token não encontrado');
 
-    setTarefas([...tarefas, novaTarefa]);
-    salvarTarefas([...tarefas, novaTarefa]); // Atualizado para salvar a nova tarefa
+    try {
+      const response = await fetch('http://localhost:3000/api/tarefas/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Adiciona o token ao cabeçalho
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tarefa: titulo }), // Envia a nova tarefa no formato JSON
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar tarefa');
+      }
+
+      const novaTarefa: Tarefa = {
+        id: Date.now(), // Você pode querer ajustar isso conforme a resposta do servidor
+        titulo,
+      };
+
+      setTarefas(prevTarefas => [...prevTarefas, novaTarefa]); // Adiciona a tarefa localmente
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const editarTarefa = (id: number, novoTitulo: string) => {
